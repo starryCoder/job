@@ -321,6 +321,112 @@ zookeeper是一个为分布式应用提供一致性服务的软件，它内部�
 
    ABCDA前缀：A,AB,ABC,ABCD 后缀:A,DA,CDA,BCDA所以最长公共长度为1
 
+### 2.Trie树
+
+又叫前缀树或者字典树，与二叉查找树不同，键不是保存在节点中，而是由节点的位置决定的，一个节点的所有子孙有相同的前缀，不是所有节点都有值，一般来说所有的叶子节点都对应值，部分内部节点也有值
+
+* 节点定义
+
+  ```java
+  class TrieNode{
+      private static int R = 26; //基数
+      public boolean isWord;
+      public TrieNode[] next = new TrieNode[R];
+  }
+  ```
+
+* 数据结构定义及常用操作
+
+  ```java
+  class Trie {
+      
+      private TrieNode root; //树的根节点
+  
+      /** Initialize your data structure here. */
+      public Trie() {
+          root = new TrieNode();
+      }
+      
+      /** Inserts a word into the trie. */
+      public void insert(String word) {
+         int len = word.length();
+          TrieNode node = root;
+          for(int i = 0; i < len; i++){
+              int t = word.charAt(i) - 'a';
+              if(null == node.next[t]){
+                  node.next[t] = new TrieNode();
+              }
+              node = node.next[t];
+          }
+          node.isWord = true;
+      }
+      
+      /** Returns if the word is in the trie. */
+      public boolean search(String word) {
+          int len = word.length();
+          TrieNode node = root;
+          for(int i = 0; i < len; i++){
+              int t = word.charAt(i) - 'a';
+              if(null == node.next[t]){
+                  return false;
+              }
+              node = node.next[t];
+          }
+          return node.isWord;
+                  
+      }
+      
+      /** Returns if there is any word in the trie that starts with the given prefix. */
+      public boolean startsWith(String prefix) {
+          int len = prefix.length();
+          TrieNode node = root;
+          for(int i = 0; i < len; i++){
+              int t = prefix.charAt(i) - 'a';
+              if(null == node.next[t]){
+                  return false;
+              }
+              node = node.next[t];
+          }
+          
+          return node != null;
+          
+      }
+  }
+  ```
+
+## 2.树
+
+### 1.红黑树
+
+红黑树是一颗自平衡的二叉查找树等同于2-3查找树，把红黑树的红节点画平就是一个3节点，红黑树有三个基本操作，分别是：左旋，右旋，变色
+
+1. 红黑树的性质
+
+   * 节点非红即黑
+
+   * 根节点一定是黑
+
+   * 所有叶子都是黑色（叶子是NIL节点）。
+
+   * 每个红色节点必须有两个黑色的子节点。（从每个叶子到根的所有路径上不能有两个连续的红色节点。）
+
+   * 从任一节点到其每个叶子的所有路径都包含相同数目的黑色节点
+
+2. 插入操作
+   * 新插入的节点是红色的
+   * 当前节点的父节点和叔叔节点都为红色，需要变色
+   * 当前节点的父节点为红色且为不同种孩子，则以父节点为当前节点进行孩子属性的反方向旋转，进行下一步操作
+   * 当前节点的父节点为红色且都为同一种孩子时， 交换祖父节点和父节点的颜色，以祖父节点为当前节点进行反方向旋转
+
+### 2.B+树
+
+B树是balance tree,也就是平衡树，所有叶子节点在同一层，B+树是B树的升级版
+
+性质
+
+* B+树的非叶子节点不保存记录的指针，非叶子节点可保存的索引大大增加，所有的查找都要进行到叶子节点
+* B+树叶子节点存储关键字按非递减顺序存储，最后一个节点会存储下一个节点的开始
+
 # 4.数据库
 
 ## 锁模块
@@ -929,3 +1035,96 @@ ACID
    * 在运行期，通过反射机制创建一个实现了一组给定接口的新类
    * 在运行时生成的 class，必须提供一组 interface 给它，然后该 class 就宣称它实现了这些 interface。该 class 的实 例可以当作这些 interface 中的任何一个来用。但是这个 Dynamic Proxy 其实就是一个 Proxy， 它不会替你作实质性的工作，在生成它的实例时你必须提供一个 handler，由它接管实际的工 作。
    * 接口中声明的所有方法都被转移到调用处理器一个集中的方法中处理（InvocationHandler.invoke）。这样，在接口方法数量比较多的时候，我们可以进行灵活处理，而不需要像静态代理那样每一个方法进行中转。而且动态代理的应用使我们的类职责更加单一，复用性更强
+
+### 2.单例模式
+
+1. 懒汉式-线程不安全
+
+   私有构造方法，延迟实例化私有静态变量，所以叫懒汉式，在没有用到该资源的条件下，可以节省资源
+
+   ```java
+   public class Singleton {
+   
+       private static Singleton uniqueInstance;
+   
+     	//私有构造方法
+       private Singleton() {
+       }
+   
+       public static Singleton getUniqueInstance() {
+           if (uniqueInstance == null) {
+               uniqueInstance = new Singleton();
+           }
+           return uniqueInstance;
+       }
+   }
+   ```
+
+2. 饿汉式-线程安全
+
+   直接实例化，避免多次实例化，也就不能节省资源
+
+   ```java
+   private static Singleton uniqueInstance = new Singleton();
+   ```
+
+3. 懒汉式-线程安全
+
+   直接对getUniqueInstance方法加锁，避免多次实例化，但是即使已经被实例化也会导致只允许单线程访问，存在性能问题，不推荐使用
+
+   ```java
+   public static synchronized Singleton getUniqueInstance() {
+       if (uniqueInstance == null) {
+           uniqueInstance = new Singleton();
+       }
+       return uniqueInstance;
+   }
+   ```
+
+4. 双重校验锁
+
+   uniqueInstance只被实例化一次，就可以使用，那么只需要对实例化部分加锁，当没有实例化才进行加锁操作
+
+   ```java
+   public class Singleton {
+   
+     	//避免jvm对指令进行重排序，确保多线程环境下的可用性
+       private volatile static Singleton uniqueInstance;
+   
+       private Singleton() {
+       }
+   
+       public static Singleton getUniqueInstance() {
+           if (uniqueInstance == null) {
+             	//对实例化进行加锁
+               synchronized (Singleton.class) {
+                   if (uniqueInstance == null) {
+                       uniqueInstance = new Singleton();
+                   }
+               }
+           }
+           return uniqueInstance;
+       }
+   }
+   
+   ```
+
+5. 静态内部类
+
+   当Singleton类被加载时，静态内部类不会被加载，只有当使用时才会加载静态内部类，这样既可以做到延时加载，也可以利用jvm提供的线程安全机制
+
+   ```java
+   public class Singleton {
+   
+       private Singleton() {
+       }
+   
+       private static class SingletonHolder {
+           private static final Singleton INSTANCE = new Singleton();
+       }
+   
+       public static Singleton getUniqueInstance() {
+           return SingletonHolder.INSTANCE;
+       }
+   }
+   ```
