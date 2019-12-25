@@ -3639,3 +3639,201 @@ public boolean isValid(String s) {
 }
 ```
 
+# LeetCode周赛
+
+## 第 168 场周赛
+
+### 1.[统计位数为偶数的数字](https://leetcode-cn.com/problems/find-numbers-with-even-number-of-digits/)（签到题）
+
+```java
+public int findNumbers(int[] nums) {
+
+    int res = 0;
+
+    for(int t : nums){
+        int count = 0;
+        while(t != 0){
+            count++;
+            t /= 10;
+        }
+
+        if(count % 2 == 0){
+            res++;
+        }
+    }
+
+    return res;
+
+}
+```
+
+### 2.[划分数组为连续数字的集合](https://leetcode-cn.com/problems/divide-array-in-sets-of-k-consecutive-numbers/)
+
+考虑到连续数组和存在重复元素可以使用优先队列，每次按照堆顶元素的大小依次删除，当出队失败则返回false
+
+```java
+public boolean isPossibleDivide(int[] nums, int k) {
+
+    int len = nums.length;
+
+    if(len % k != 0){
+        return false;
+    }
+
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+
+    for(int t : nums) {
+        queue.offer(t);
+    }
+
+    while(!queue.isEmpty()){
+        int start = queue.poll();
+      	//从start到start + 1按元素依次从堆中删除
+        for(int i = start + 1; i < start + k; i++){
+            if(!queue.remove(i)){
+                return false;
+            }
+        }
+
+    }
+    return true;
+}
+```
+
+### 3.[子串的最大出现次数](https://leetcode-cn.com/problems/maximum-number-of-occurrences-of-a-substring/)（纸老虎）
+
+读题意自然想到滑动窗口
+
+```java
+public int maxFreq(String s, int maxLetters, int minSize, int maxSize) {
+
+    Map<String, Integer> map = new HashMap<>();
+    int start = 0, end = minSize, len = s.length(), res = 0;
+    while (start < len - minSize + 1) {
+
+        int count = count(s, start, end);
+        if (count > maxLetters) {
+            start++;
+            end++;
+        } else {
+            //依照maxsize扩展字符串
+            while (end < Math.min(start + maxSize + 1, len + 1) && count <= maxLetters) {
+                String t = s.substring(start, end++);
+                map.put(t, map.getOrDefault(t, 0) + 1);
+                if (end <= len)
+                    count = count(s, start, end);
+            }
+
+            start++;
+            end = start + minSize;
+        }
+    }
+
+    for (int t : map.values()) {
+        res = Math.max(t, res);
+    }
+
+    return res;
+}
+
+private int count(String s, int start, int end) {
+    Set<Character> set = new HashSet<>();
+    for (int i = start; i < end; i++) {
+        set.add(s.charAt(i));
+    }
+
+    return set.size();
+}
+```
+
+读懂题意（看完大神的题解）发现此题就是纸老虎，maxsize就是唬人的，完全不用考虑，完全不用滑动窗口，直接暴力就行了，因为如果maxsize为解，那么minsize必然也为解，改完之后时间直接变为10%
+
+```java
+public int maxFreq(String s, int maxLetters, int minSize, int maxSize) {
+
+    Map<String, Integer> map = new HashMap<>();
+
+    int start = 0, end = minSize, len = s.length(), res = 0;
+
+    while (start < len - minSize + 1) {
+
+        int count = count(s, start, end);
+        if (count <= maxLetters) {
+            String t = s.substring(start, end);
+
+            map.put(t, map.getOrDefault(t, 0) + 1);
+        }
+        start++;
+        end++;
+
+    }
+
+    for (int t : map.values()) {
+        res = Math.max(t, res);
+    }
+
+    return res;
+}
+
+private int count(String s, int start, int end) {
+    Set<Character> set = new HashSet<>();
+    for (int i = start; i < end; i++) {
+        set.add(s.charAt(i));
+    }
+
+    return set.size();
+}
+```
+
+### 4.[你能从盒子里获得的最大糖果数](https://leetcode-cn.com/problems/maximum-candies-you-can-get-from-boxes/)
+
+BFS+模拟，直接上代码
+
+```java
+public int maxCandies(int[] status, int[] candies, int[][] keys, int[][] containedBoxes, int[] initialBoxes) {
+
+    int len = status.length, res = 0;
+    boolean[] isVisited = new boolean[len]; //访问标志
+    Set<Integer> nowKeys = new HashSet<>(), nowBoxes = new HashSet<>(); //存放现有的钥匙和现有的未打开的箱子
+    Queue<Integer> queue = new LinkedList<>(); 
+
+  	//初始化
+    for(int t : initialBoxes)
+        if(status[t] == 1)
+            queue.offer(t);
+        else
+            nowBoxes.add(t);
+
+  	
+    while(!queue.isEmpty()){
+        int size = queue.size();
+        while(size-- > 0){
+
+            int index = queue.poll();
+            res += candies[index];
+
+          	//遍历内含的箱子
+            for(int t : containedBoxes[index])
+                if((status[t] == 1 || nowKeys.contains(t)) && !isVisited[t])
+                    queue.offer(t);
+                else
+                    nowBoxes.add(t);        
+
+          	//遍历钥匙
+            for(int t : keys[index])
+                nowKeys.add(t);
+            isVisited[index] = true;
+        }
+      	
+      	//处理新增的钥匙或包
+        for(int b : nowBoxes){
+           if(nowKeys.contains(b) && !isVisited[b]){
+                queue.offer(b);
+            }
+        }
+    }
+
+    return res;
+}
+```
+
