@@ -1876,7 +1876,7 @@ public int wiggleMaxLength(int[] nums) {
 
 [72. Edit Distance](https://leetcode.com/problems/edit-distance/)
 
-思路：`dp[m][n]表示word1(0~m)==>word2(0~n)的编辑距离`
+思路：`dp[m][n]表示word1(0~m)==>word2(0~n)的编辑距离, dp[i][j - 1]表示插入, dp[i - 1][j]表示删除，dp[i - 1][j -1]表示替换`
 
 ```java
 public int minDistance(String word1, String word2) {
@@ -1905,6 +1905,62 @@ public int minDistance(String word1, String word2) {
 
     return dp[m][n];
 
+}
+```
+
+#### 2.最长公共子序列
+
+[1143. Longest Common Subsequence](https://leetcode.com/problems/longest-common-subsequence/)
+
+`dp[i][j]表示text1（0..i)text2(0..j)的最长公共子序列`
+
+```java
+public int longestCommonSubsequence(String text1, String text2) {
+    int len1 = text1.length(), len2 = text2.length();
+    int[][] dp = new int[len1 + 1][len2 + 1];
+
+    for(int i = 1; i <= len1; i++){
+        char c1 = text1.charAt(i - 1);
+        for(int j = 1; j <= len2; j++){
+            if(c1 == text2.charAt(j - 1)){
+                dp[i][j] = dp[i - 1][j - 1] + 1;
+            }else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
+    }
+    return dp[len1][len2];
+}
+```
+
+#### 3.最长回文子序列
+
+[516. Longest Palindromic Subsequence](https://leetcode.com/problems/longest-palindromic-subsequence/)
+
+`两种解法：第一种，求序列与相反序列的最长公共子序列，第二种，区间动态规划：dp[i][j]表示从i-j最长回文子序列的长度`
+
+```java
+public int longestPalindromeSubseq(String s) {
+    int len = s.length();
+    int[][] dp = new int[len][len];
+
+  	//一个字符回文子序列长度为1
+    for(int i = 0; i < len; i++){
+        dp[i][i] = 1;
+    }
+
+    for(int i = len - 2; i >= 0; i--){
+        char c = s.charAt(i);
+        for(int j = i + 1; j < len; j++){
+            if(c == s.charAt(j)){
+                dp[i][j] = dp[i + 1][j - 1] + 2;
+            }else {
+              	//单独考虑一个字符串加入其中
+                dp[i][j] = Math.max(dp[i][j - 1], dp[i + 1][j]);
+            }
+        }
+    }
+    return dp[0][len - 1];
 }
 ```
 
@@ -3834,6 +3890,300 @@ public int maxCandies(int[] status, int[] candies, int[][] keys, int[][] contain
     }
 
     return res;
+}
+```
+
+## 第169场周赛
+
+### 1.[和为零的N个唯一整数](https://leetcode-cn.com/problems/find-n-unique-integers-sum-up-to-zero/)(签到题)
+
+```java
+public int[] sumZero(int n) {
+    List<Integer> res = new ArrayList<>();
+    int[] r = new int[n];
+    if (n % 2 == 1) {
+        res.add(0);
+    }
+    for (int i = 1; i <= n / 2; i++) {
+        res.add(i);
+        res.add(-i);
+    }
+
+    for (int i = 0; i < n; i++) {
+        r[i] = res.get(i);
+    }
+    return r;
+}
+```
+
+### 2.[两棵二叉搜索树中的所有元素](https://leetcode-cn.com/problems/all-elements-in-two-binary-search-trees/)
+
+按元素的大小在两颗树交替遍历
+
+```java
+public List<Integer> getAllElements(TreeNode root1, TreeNode root2) {
+
+    LinkedList<TreeNode> s1 = new LinkedList<>(), s2 = new LinkedList<>();
+    List<Integer> res = new ArrayList<>();
+
+    train(root1, s1);
+    train(root2, s2);
+
+    while(!s1.isEmpty() && !s2.isEmpty()){
+
+        TreeNode n1 = s1.peek(), n2 = s2.peek();
+
+      	//先处理小的节点
+        if(n1.val > n2.val){
+            process(s2, res);
+        } else {
+            process(s1, res);
+        }
+    }
+
+    while(!s1.isEmpty())
+        process(s1, res);
+
+    while(!s2.isEmpty())
+        process(s2, res);
+
+    return res;
+}
+
+//加入结果集
+private void process(LinkedList<TreeNode> s, List<Integer> res) {
+    TreeNode n = s.pop();
+    res.add(n.val);
+    train(n.right, s);
+}
+
+//找最小值
+private void train(TreeNode root,  LinkedList<TreeNode> s){
+    while(root != null){
+        s.push(root);
+        root = root.left;
+    }
+}
+```
+
+### 3.[跳跃游戏 III](https://leetcode-cn.com/problems/jump-game-iii/)
+
+BFS
+
+```java
+public boolean canReach(int[] arr, int start) {
+
+    int len = arr.length;
+    boolean[] flag = new boolean[len];
+
+    Queue<Integer> queue  = new LinkedList<>();
+
+    queue.offer(start);
+    flag[start] = true;
+
+    while(!queue.isEmpty()){
+        int size =  queue.size();
+        while(size-- > 0){
+            int index = queue.poll();
+
+            if(arr[index] == 0){
+                return true;
+            }
+
+            int t = index  + arr[index];
+            if(t < len &&  !flag[t]){
+                queue.offer(t);
+                flag[t] = true;
+            }
+
+            t = index  - arr[index];
+            if(t >= 0 &&  !flag[t]){
+                queue.offer(t);
+                flag[t] = true;
+            }
+        }
+
+    }
+    return false;
+
+}
+```
+
+### 4.[口算难题](https://leetcode-cn.com/problems/verbal-arithmetic-puzzle/)
+
+暴力搜索，没有用任何剪枝技巧
+
+```java
+private static final int[] POW = new int[]{1, 10, 100, 1000, 10000, 100000, 1000000};
+
+public boolean isSolvable(String[] words, String result) {
+
+    Set<Character> noZero = new HashSet<>(), chars = new HashSet<>();
+    Map<Character, Integer> charCount = new HashMap<>();
+
+    boolean[] isUsed = new boolean[10];
+    for (String s : words) {
+        int len = s.length();
+        noZero.add(s.charAt(0));
+        for (int i = 0; i < len; i++) {
+            char c = s.charAt(i);
+            chars.add(c);
+            charCount.put(c, charCount.getOrDefault(c, 0) + POW[len - i - 1]);
+        }
+    }
+
+    int len = result.length();
+    noZero.add(result.charAt(0));
+    for (int i = 0; i < len; i++) {
+        char c = result.charAt(i);
+        chars.add(c);
+        charCount.put(c, charCount.getOrDefault(c, 0) - POW[len - i - 1]);
+    }
+
+    return backTrack(new ArrayList<>(chars), noZero, isUsed, charCount, 0, 0);
+}
+
+private boolean backTrack(List<Character> charList, Set<Character> noZero, boolean[] isUsed, Map<Character, Integer> charCount, int diff, int step) {
+
+    if (step == charList.size())
+        return diff == 0;
+
+    char c = charList.get(step);
+    for (int i = 0; i < 10; i++) {
+        if ((i == 0 && noZero.contains(c)) || isUsed[i]) {
+
+            isUsed[i] = true;
+            if (backTrack(charList, noZero, isUsed, charCount, diff + charCount.get(c) * i, step + 1))
+                return true;
+            isUsed[i] = false;
+        }
+    }
+    return false;
+
+}
+```
+
+
+
+## 第170场周赛
+
+### 1.[解码字母到整数映射](https://leetcode-cn.com/problems/decrypt-string-from-alphabet-to-integer-mapping/)（签到题）
+
+```java
+public String freqAlphabets(String s) {
+  
+    StringBuilder sb = new StringBuilder();
+    int len = s.length();
+    for (int i = 0; i < len; i++) {
+        if (i + 2 < len && s.charAt(i + 2) == '#') {
+            sb.append((char) ('a' + Integer.parseInt(s.substring(i, i + 2)) - 1));
+            i += 2;
+        } else {
+            sb.append((char) ('a' + s.charAt(i) - '1'));
+        }
+    }
+    return sb.toString();
+}
+```
+
+### 2.[子数组异或查询](https://leetcode-cn.com/problems/xor-queries-of-a-subarray/)
+
+两个相同的数异或还是原来的数，与0异或等于本身
+
+```java
+public int[] xorQueries(int[] arr, int[][] queries) {
+
+    int len = arr.length, l = queries.length;
+    int[] dp  = new int[len + 1];
+    int[] res = new int[l];
+
+    for(int i = 1; i <= len;  i++){
+        dp[i] = dp[i - 1] ^ arr[i - 1];
+    }
+
+    for(int i = 0; i < l; i++){
+        res[i] = dp[queries[i][0]] ^ dp[queries[i][1] + 1];
+    }
+
+    return res;
+}
+```
+
+### 3.[获取你好友已观看的视频](https://leetcode-cn.com/problems/get-watched-videos-by-your-friends/)
+
+BFS,对map排序
+
+```java
+public List<String> watchedVideosByFriends(List<List<String>> watchedVideos, int[][] friends, int id, int level) {
+    int len = friends.length, n = level;
+    boolean[] isVisited = new boolean[len];
+    Queue<Integer> queue = new LinkedList<>();
+
+    queue.offer(id);
+    isVisited[id] = true;
+    while (n-- > 0) {
+        int size = queue.size();
+        while (size-- > 0) {
+            int index = queue.poll();
+
+            for (int t : friends[index]) {
+                if (!isVisited[t]){
+                    queue.offer(t);
+                    isVisited[t] = true;
+                }
+            }
+        }
+    }
+
+    Map<String, Integer> countMap = new HashMap<>();
+    while (!queue.isEmpty()) {
+        int index = queue.poll();
+        for (String m : watchedVideos.get(index)) {
+            countMap.put(m, countMap.getOrDefault(m, 0) + 1);
+        }
+    }
+
+    //这里将map.entrySet()转换成list
+    List<Map.Entry<String, Integer>> list = new ArrayList<>(countMap.entrySet());
+    //然后通过比较器来实现排序
+    Collections.sort(list, (e1, e2) -> {
+        if (e1.getValue() != e2.getValue()) {
+            return e1.getValue() > e2.getValue() ? 1 : -1;
+        }
+        return e1.getKey().compareTo(e2.getKey());
+    });
+
+    List<String> res = new ArrayList<>();
+
+    for (Map.Entry<String, Integer> entry : list) {
+        res.add(entry.getKey());
+    }
+
+    return res;
+}
+```
+
+### 4.[让字符串成为回文串的最少插入次数](https://leetcode-cn.com/problems/minimum-insertion-steps-to-make-a-string-palindrome/)
+
+`区间动态规划dp[i][j],表示i~j的子串成为回文串最少的插入次数`
+
+```java
+public int minInsertions(String s) {
+    int len = s.length();
+    int[][] dp = new int[len][len];
+
+  
+    for(int i = len - 2; i >= 0; i--){
+        char c = s.charAt(i);
+        for(int j = i + 1; j < len; j++){
+          	//在开头或者在结尾添加字符是字符串形成回文
+            dp[i][j] = Math.min(dp[i + 1][j], dp[i][j - 1]) + 1;
+            if(c == s.charAt(j))
+              	//这两个字符可以不考虑
+                dp[i][j] = Math.min(dp[i][j], dp[i + 1][j - 1]);
+        }
+    }
+    return dp[0][len - 1];        
 }
 ```
 
