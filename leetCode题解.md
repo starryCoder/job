@@ -4187,3 +4187,870 @@ public int minInsertions(String s) {
 }
 ```
 
+## 第171场周赛
+
+### 1.[ 将整数转换为两个无零整数的和](https://leetcode-cn.com/problems/convert-integer-to-the-sum-of-two-no-zero-integers/)（签到题）
+
+```java
+public int[] getNoZeroIntegers(int n) {
+    int[] res = new int[2];
+    for(int i = 1; i <= n / 2; i++){
+        if(check(i) && check(n - i)){
+            res[0] = i;
+            res[1] = n - i;
+            break;
+        }
+    }
+    return res;        
+}
+
+private boolean check(int n){
+    while(n != 0){
+        if(n % 10 == 0){
+            return false;
+        }
+        n /= 10;
+    }
+    return true;
+}
+```
+
+### 2.[或运算的最小翻转次数](https://leetcode-cn.com/problems/minimum-flips-to-make-a-or-b-equal-to-c/)
+
+或运算的原理
+
+```java
+public int minFlips(int a, int b, int c) {
+
+    Set<Integer> countA = getNum(a);
+    Set<Integer> countB = getNum(b);
+
+    Set<Integer> countC = getNum(c);
+
+    countA.removeAll(countC);
+    countB.removeAll(countC);
+
+    countC.removeAll(getNum(a));
+    countC.removeAll(getNum(b));
+
+    return countA.size() + countB.size() + countC.size();
+}
+
+private Set<Integer> getNum(int n) {
+    int i = 0;
+    Set<Integer> res = new HashSet<>();
+    while (n != 0) {
+        if (n % 2 == 1) {
+            res.add(i);
+        }
+
+        i++;
+        n /= 2;
+    }
+
+    return res;
+}
+```
+
+### 3.[连通网络的操作次数](https://leetcode-cn.com/problems/number-of-operations-to-make-network-connected/)
+
+可以三种方法：并查集，BFS,DFS
+
+```java
+//并查集
+
+private int[] id;
+private int[] sz;
+private int count;
+
+private void inintUF(int n){
+    id = new int[n];
+    sz = new int[n];
+    count = n;
+    Arrays.fill(sz, 1);
+    for(int i = 0; i < n; i++){
+        id[i] = i;
+    }
+}
+
+private int find(int p){
+    if(p != id[p]){
+        id[p] = find(id[p]);
+    }
+    return id[p];
+}
+
+private void unin(int p, int q){
+    int pR = find(p), qR = find(q);
+
+    if(pR == qR)
+        return;
+
+    if(sz[pR] > sz[qR]){
+        id[qR] = pR;
+        sz[pR] += sz[qR];
+    }else {
+        id[pR] = qR;
+        sz[qR] += sz[pR];
+    }
+    count--;
+}
+
+public int makeConnected(int n, int[][] connections) {
+    int len = connections.length;
+    if(len < n - 1)
+        return -1;
+
+    inintUF(n);
+    for(int[] t : connections){
+        unin(t[0], t[1]);
+    }
+
+    return count - 1;
+}
+```
+
+```java
+//BFS
+public int makeConnected(int n, int[][] connections) {
+    boolean[] isVisited = new boolean[n];
+
+    Map<Integer, Set<Integer>> map = new HashMap<>();
+
+    for(int[] temp : connections){
+        for(int i = 0; i < 2; i++){
+            Set<Integer> node = map.getOrDefault(temp[i], new HashSet<>());
+            node.add(temp[(i + 1) % 2]);
+            map.put(temp[i], node);
+        }
+    }
+    int count = 0;
+    for(int i = 0; i < n; i++){
+        if(!isVisited[i]){
+            count++;
+            if(map.get(i) == null)
+                continue;
+
+            Queue<Integer> queue = new LinkedList<>();
+            queue.add(i);
+            isVisited[i] = true;
+            while(!queue.isEmpty()){
+
+                int size = queue.size();
+                while(size-- > 0){
+                    int index = queue.poll();
+                    Set<Integer> node =  map.get(index);
+                    for(int t : node){
+                        if(!isVisited[t]){
+                            queue.offer(t);
+                            isVisited[t] = true;
+                        }
+                    }
+                }
+            }
+
+        }
+
+    }
+
+    return connections.length >= n - 1 ? count - 1 : -1;
+}
+```
+
+```java
+//DFS
+public int makeConnected(int n, int[][] connections) {
+    boolean[] isVisited = new boolean[n];
+
+    Map<Integer, Set<Integer>> map = new HashMap<>();
+
+    for (int[] temp : connections) {
+        for (int i = 0; i < 2; i++) {
+            Set<Integer> node = map.getOrDefault(temp[i], new HashSet<>());
+            node.add(temp[(i + 1) % 2]);
+            map.put(temp[i], node);
+        }
+    }
+
+    int count = 0;
+    for (int i = 0; i < n; i++) {
+        if (!isVisited[i]) {
+            count++;
+
+            if (map.get(i) == null)
+                continue;
+
+            dfs(isVisited, map, i);
+        }
+    }
+
+    return connections.length >= n - 1 ? count - 1 : -1;
+
+}
+
+private void dfs(boolean[] isVisited, Map<Integer, Set<Integer>> map, int n) {
+
+    isVisited[n] = true;
+    Set<Integer> nodes = map.get(n);
+
+    for (int node : nodes) {
+        if (!isVisited[node]) {
+            dfs(isVisited, map, node);
+        }
+    }
+
+}
+```
+
+### 4.[二指输入的的最小距离](https://leetcode-cn.com/problems/minimum-distance-to-type-a-word-using-two-fingers/)
+
+`动态规划dp[i][l][r]表示：第i个字母时左手和右手的位置，当前字符c用左手输入dp[i][c][r]=Math.min(dp[i][c][r], dp[i - 1][l][r]+len(c, l)),右手同理`
+
+```java
+public int minimumDistance(String word) {
+    int len = word.length(), res = Integer.MAX_VALUE;
+
+    int[][][] dp = new int[len+1][26][26];
+
+    for(int i = 1; i <= len; i++){
+        for(int j = 0; j < 26; j++){
+            Arrays.fill(dp[i][j], Integer.MAX_VALUE);
+        }
+    }
+
+    for(int i = 1; i <= len; i++){
+        int c = word.charAt(i - 1) - 'A';
+        for(int l = 0; l < 26; l++){
+            for(int r = 0; r < 26; r++){
+                if(dp[i - 1][l][r] != Integer.MAX_VALUE){
+                    dp[i][c][r] = Math.min(dp[i][c][r], dp[i - 1][l][r] + len(l, c));
+                    dp[i][l][c] = Math.min(dp[i][l][c], dp[i - 1][l][r] + len(r, c));
+                }
+                if(i == len){
+                    res = Math.min(res, dp[i][c][r]);
+                    res = Math.min(res, dp[i][l][c]);
+                }                    
+            }
+        }
+    }
+    return res;
+}
+
+private int len(int a, int b){
+    int x1 = a / 6, y1 = a % 6;
+    int x2 = b / 6, y2 = b % 6;
+    return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+}
+```
+
+## 第172场周赛
+
+### 1.[6 和 9 组成的最大数字](https://leetcode-cn.com/problems/maximum-69-number/)(签到题)
+
+选最高位一个数字从6反转为9
+
+```java
+public int maximum69Number(int num) {
+    LinkedList<Integer> stack = new LinkedList<>();
+
+    while (num != 0) {
+        stack.push(num % 10);
+        num /= 10;
+    }
+    boolean flag = true;
+    int res = 0;
+    while (!stack.isEmpty()) {
+
+        int t = stack.pop();
+        if (flag && t == 6) {
+            t = 9;
+            flag = false;
+        }
+        res = res * 10 + t;
+    }
+    return res;
+}
+```
+
+### 2.[竖直打印单词](https://leetcode-cn.com/problems/print-words-vertically/)
+
+按列生成单词将尾部空格替换
+
+```java
+public List<String> printVertically(String s) {
+    String[] temp = s.split(" ");
+    int len = temp.length, maxLen = 0;
+    List<String> res = new ArrayList<>();
+    for (String t : temp) {
+        maxLen = Math.max(maxLen, t.length());
+    }
+
+    for (int i = 0; i < maxLen; i++) {
+        StringBuilder sb = new StringBuilder();
+
+        for (String t : temp) {
+            if (i < t.length()) {
+                sb.append(t.charAt(i));
+
+            } else {
+                sb.append(' ');
+            }
+        }
+
+        for (int j = len - 1; j >= 0; j--) {
+            if (sb.charAt(j) == ' ') {
+                sb.deleteCharAt(j);
+            } else {
+                break;
+            }
+        }
+        res.add(sb.toString());
+    }
+    return res;
+}
+```
+
+### 3.[删除给定值的叶子节点](https://leetcode-cn.com/problems/delete-leaves-with-a-given-value/)
+
+先处理叶子结点，再处理父节点，后序遍历，使用带返回值的递归函数直接删除叶子结点，因为删除叶子结点的时候需要父节点
+
+```java
+public TreeNode removeLeafNodes(TreeNode root, int target) {
+
+    if(root == null)
+        return root;
+
+    root.left = removeLeafNodes(root.left, target);
+    root.right = removeLeafNodes(root.right, target);
+
+    if(root.left == null && root.right == null && root.val == target){
+        return null;   
+    }else{
+        return root;
+    }
+}
+```
+
+### 4.[灌溉花园的最少水龙头数目](https://leetcode-cn.com/problems/minimum-number-of-taps-to-open-to-water-a-garden/)
+
+`lands[i]表示覆盖i-1到i土地的水龙头所覆盖的土地的最右边的土地，land[0]=5,表示覆盖0-1这块土地的水龙头里，最远覆盖到4-5这块土地`
+
+```java
+public int minTaps(int n, int[] ranges) {
+
+    int[] lands = new int[n];
+
+    for (int i = 0; i < n + 1; i++) {
+        int l = Math.max(i - ranges[i], 0);
+        int r = Math.min(i + ranges[i], n);
+        for (int j = l; j < r; j++) {
+            lands[j] = Math.max(lands[j], r);
+        }
+    }
+
+    int res = 0, cur = 0;
+
+
+    while (cur < n){
+        if(lands[cur] == 0)
+            return -1;
+        cur =  lands[cur];
+        res++;
+    }
+    return res;
+
+}
+```
+
+## 第173场周赛
+
+### 1.[删除回文子序列](https://leetcode-cn.com/problems/remove-palindromic-subsequences/)
+
+仔细审题，字符串只包含a和b两种字符，所以只需判断字符串是否为回文串
+
+```java
+public int removePalindromeSub(String s) {
+
+    int len = s.length(), j = len - 1;
+    if(len == 0)
+        return 0;
+
+
+    for(int i = 0; i < len / 2; i++){
+        if(s.charAt(i) != s.charAt(j--))
+            return 2;
+    }
+
+    return 1;
+
+}
+```
+
+### 2.[餐厅过滤器](https://leetcode-cn.com/problems/filter-restaurants-by-vegan-friendly-price-and-distance/)
+
+模拟题，按题目要求过滤,排序即可
+
+```java
+public List<Integer> filterRestaurants(int[][] restaurants, int veganFriendly, int maxPrice, int maxDistance) {
+    List<int[]> t = new ArrayList<>();
+    List<Integer> res = new ArrayList<>();
+
+    for (int[] temp : restaurants) {
+        if (((veganFriendly == 1 && temp[2] == 1) || (veganFriendly == 0))
+                && temp[3] <= maxPrice
+                && temp[4] <= maxDistance) {
+
+            t.add(temp);
+
+        }
+    }
+
+    t.sort((t1, t2) -> {
+
+        if (t1[1] != t2[1]) {
+            return t1[1] > t2[1] ? -1 : 1;
+        }
+        if (t1[0] != t2[0]) {
+            return t1[0] > t2[0] ? -1 : 1;
+        }
+
+        return 0;
+    });
+
+    for (int[] temp : t) {
+        res.add(temp[0]);
+    }
+
+    return res;
+}
+```
+
+### 3.[阈值距离内邻居最少的城市](https://leetcode-cn.com/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/)
+
+floyd算法求多源最短路径
+
+```java
+public int findTheCity(int n, int[][] edges, int distanceThreshold) {
+
+    int[][] distance = new int[n][n];
+
+    for(int[] t : distance)
+        Arrays.fill(t, 100000);
+
+    for(int[] t : edges){
+        distance[t[0]][t[1]] = t[2];
+        distance[t[1]][t[0]] = t[2];
+    }
+
+  //floyd
+    for(int k = 0; k < n; k++){
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < n; j++){
+                if(i == j)
+                    continue;
+                distance[i][j] = Math.min(distance[i][k] + distance[k][j], distance[i][j]);
+            }
+        }
+    }
+
+    int[] counts = new int[n];
+    int min = 101;
+    for(int i = 0; i < n; i++){
+
+        int cnt = 0;
+
+        for(int t : distance[i])
+            if(t <= distanceThreshold)
+                cnt++;
+
+        min = Math.min(cnt, min);
+        counts[i] = cnt;
+    }
+
+    for(int i = n - 1; i >= 0; i--)
+        if(counts[i] == min)
+            return i;
+
+
+    return 0;
+
+}
+```
+
+### 4.[工作计划的最低难度](https://leetcode-cn.com/problems/minimum-difficulty-of-a-job-schedule/)
+
+`dp[i][j]前i天完成前j项任务，可以选择前i-1天完成k-1项任务，最后一天完成k...j的任务，dp[i][j]=dp[i-1][j-1]+max(jobDifficulty[k]...jobDifficulty[j])`
+
+```java
+public int minDifficulty(int[] jobDifficulty, int d) {
+
+    int cnt = jobDifficulty.length;
+    int[][] dp = new int[d][cnt];
+
+    if(d > cnt)
+        return -1;
+
+    for(int i = 0; i < d; i++)
+        Arrays.fill(dp[i], Integer.MAX_VALUE / 3);
+
+    int max = 0;
+    for(int i = 0; i < cnt; i++){
+        max = Math.max(jobDifficulty[i], max);
+        dp[0][i] = max;            
+    }
+
+
+    for(int i = 1; i < d; i++){
+
+        for(int j = i ; j < cnt; j++){
+            max = jobDifficulty[j];
+            for(int k = j; k >= i; k--){
+                max = Math.max(jobDifficulty[k], max);
+                dp[i][j] = Math.min(dp[i][j], dp[i - 1][k - 1] + max);
+            }
+
+        }
+    }
+    return dp[d - 1][cnt - 1];
+}
+```
+
+## 第174场周赛
+
+### 1.[方阵中战斗力最弱的 K 行](https://leetcode-cn.com/problems/the-k-weakest-rows-in-a-matrix/)
+
+签到题，索引绑定然后排序
+
+```java
+public int[] kWeakestRows(int[][] mat, int k) {
+
+    Map<Integer, Integer> count = new HashMap<>();
+    int[] res = new int[k];
+    for (int i = 0; i < mat.length; i++) {
+        count.put(i, 0);
+        for (int t : mat[i]) {
+            if (t == 1)
+                count.put(i, count.get(i) + 1);
+        }
+    }
+
+    List<Map.Entry<Integer, Integer>> entryList = new ArrayList<>(count.entrySet());
+    entryList.sort((e1, e2) -> {
+        int v1 = e1.getValue(), v2 = e2.getValue(), k1 = e1.getKey(), k2 = e2.getKey();
+        if (v1 != v2) {
+            return v1 > v2 ? 1 : -1;
+        }
+
+        if (k1 != k2) {
+            return k1 > k2 ? 1 : -1;
+        }
+        return 0;
+    });
+
+    for (int i = 0; i < k; i++) {
+        res[i] = entryList.get(i).getKey();
+    }
+    return res;
+}
+```
+
+### 2.[数组大小减半](https://leetcode-cn.com/problems/reduce-array-size-to-the-half/)
+
+贪心算法：每次减去出现次数最多的数字
+
+```java
+public int minSetSize(int[] arr) {
+    int len = arr.length, res = 0, nowLen = len;
+    Map<Integer, Integer> count = new HashMap<>();
+    for(int t : arr)
+        count.put(t, count.getOrDefault(t, 0) + 1);
+
+    List<Map.Entry<Integer, Integer>> entryList = new ArrayList<>(count.entrySet());
+
+    entryList.sort((e1, e2) -> {
+        int v1 = e1.getValue(), v2 = e2.getValue(), k1 = e1.getKey(), k2 = e2.getKey();
+        if (v1 != v2) {
+            return v1 > v2 ? -1 : 1;
+        }
+        return 0;
+    });
+
+    int i = 0;
+    while(nowLen > len / 2){
+        res++;
+        nowLen -= entryList.get(i++).getValue();
+    }
+    return res;  
+}
+```
+
+### 3.[分裂二叉树的最大乘积](https://leetcode-cn.com/problems/maximum-product-of-splitted-binary-tree/)
+
+遍历所有可能的子树，求乘积时可以用整个数的和减去已知子树的和来求
+
+```java
+class Solution {
+
+  private long res = 0;
+  private int MOD = 1000000000 + 7;
+
+  //求和
+  public int sumTree(TreeNode root){
+
+      if(root == null)
+          return 0;
+
+      return root.val + sumTree(root.left) + sumTree(root.right);
+  }
+
+  //后序遍历所有子树
+  public int travl(TreeNode root, int sum){
+      if(root == null)
+          return 0;
+
+      int left = travl(root.left,  sum);
+      int right = travl(root.right, sum);
+      int subSum = left + right + root.val  ;
+
+      res = Math.max(res, (long)(sum - subSum) * (long)subSum);
+
+      return subSum;
+
+  }
+
+  public int maxProduct(TreeNode root) {
+
+      int sum = sumTree(root);
+      travl(root, sum);
+      return (int)(res % MOD);
+
+  }
+}
+```
+
+### 4.[跳跃游戏 V](https://leetcode-cn.com/problems/jump-game-v/)
+
+`动态规划：首先按照高度排序从最低的位置开始跳,dp[i]表示当前位置可以到达的坐标数，j表示从i可以达到的位置dp[i]=Math.max(dp[j]+1,dp[i])`
+
+```java
+public int maxJumps(int[] arr, int d) {
+
+    Map<Integer, Integer> map = new HashMap<>();
+    int len = arr.length, max = 0;
+    int[] dp = new int[len];
+
+    for (int i = 0; i < len; i++) {
+        map.put(i, arr[i]);
+        dp[i] = 1;
+    }
+
+    List<Map.Entry<Integer, Integer>> temp = new ArrayList<>(map.entrySet());
+
+    temp.sort((e1, e2) -> {
+        int v1 = e1.getValue(), v2 = e2.getValue(), k1 = e1.getKey(), k2 = e2.getKey();
+        if (v1 != v2) {
+            return v1 > v2 ? 1 : -1;
+        }
+
+        if (k1 != k2) {
+            return k1 > k2 ? 1 : -1;
+        }
+        return 0;
+    });
+
+    for (Map.Entry<Integer, Integer> e : temp) {
+        int k = e.getKey();
+
+        //向右跳
+        int r = Math.min(k + d, len - 1);
+        for (int i = k + 1; i <= r; i++) {
+            if (arr[k] <= arr[i])
+                break;
+            dp[k] = Math.max(dp[i] + 1, dp[k]);
+
+        }
+
+        //向左跳
+        int l = Math.max(0, k - d);
+        for (int i = k - 1; i >= l; i--) {
+            if (arr[k] <= arr[i])
+                break;
+            dp[k] = Math.max(dp[i] + 1, dp[k]);
+        }
+
+        max = Math.max(max, dp[k]);
+    }
+    return max;
+}
+```
+
+## 第175场周赛
+
+### 1.[检查整数及其两倍数是否存在](https://leetcode-cn.com/problems/check-if-n-and-its-double-exist/)
+
+签到题，可以使用HashMap
+
+```java
+public boolean checkIfExist(int[] arr) {
+    int len = arr.length;
+    for(int i = 0; i < len; i++){
+        for(int j  = 0; j < len; j++){
+            if(i != j && arr[i] == 2 * arr[j])
+                return true;
+        }
+    }
+
+    return false;
+}
+```
+
+### 2.[制造字母异位词的最小步骤数](https://leetcode-cn.com/problems/minimum-number-of-steps-to-make-two-strings-anagram/)
+
+求两个字符串字符的差异
+
+```java
+public int minSteps(String s, String t) {
+
+    Map<Character, Integer> sCount = new HashMap<>(), tCount = new HashMap<>();
+
+    for (char c : s.toCharArray())
+        sCount.put(c, sCount.getOrDefault(c, 0) + 1);
+
+    for (char c : t.toCharArray())
+        tCount.put(c, tCount.getOrDefault(c, 0) + 1);
+
+    int res = 0;
+    for (Map.Entry<Character, Integer> e : sCount.entrySet()) {
+        int tc = tCount.getOrDefault(e.getKey(), 0);
+        if (e.getValue() > tc)
+            res += (e.getValue() - tc);
+    }
+
+    return res;
+}
+```
+
+### 3.[推文计数](https://leetcode-cn.com/problems/tweet-counts-per-frequency/)
+
+用TreeSet对时间进行排序
+
+```java
+class TweetCounts {
+
+  Map<String, TreeSet<Integer>> map;
+
+  public TweetCounts() {
+      map = new HashMap<>();
+
+  }
+
+  public void recordTweet(String tweetName, int time) {
+      TreeSet<Integer> record = map.getOrDefault(tweetName, new TreeSet<>());
+      record.add(time);
+
+      map.put(tweetName, record);
+
+  }
+
+  public List<Integer> getTweetCountsPerFrequency(String freq, String tweetName, int startTime, int endTime) {
+
+      TreeSet<Integer> record = map.get(tweetName);
+
+      List<Integer> res = new ArrayList<>();
+
+      int start = startTime, end = endTime, deal = 0;
+
+      switch (freq) {
+          case "minute":
+              deal = 60;
+              break;
+          case "hour":
+              deal = 3600;
+              break;
+          case "day":
+              deal = 86400;
+              break;
+          default:
+              break;
+      }
+      while (start < end + 1) {
+          int t = Math.min(start + deal, end + 1);
+          res.add(record.subSet(start, t).size());
+
+          start = t;
+      }
+      return res;
+  }
+}
+```
+
+### 4.[参加考试的最大学生数](https://leetcode-cn.com/problems/maximum-students-taking-exam/)
+
+`状态压缩的动态规划dp[i][j]表示第i行为的坐位方式为j，dp[i][j]=max(dp[i-1][k]+count(j),dp[i][j])`
+
+```java
+class Solution {
+
+  private Map<Integer, Integer> map = new HashMap<>();
+
+  public int maxStudents(char[][] seats) {
+      int m = seats.length, n = seats[0].length, max = 0;
+
+      int[][] dp = new int[m][1 << n];
+
+      for (int i = 0; i < m; i++) {
+          for (int j = 0; j < (1 << n); j++) {
+              if (!isValid(seats, i, j))
+                  continue;
+
+              if (i == 0) {
+                  dp[i][j] = count(j);
+              } else {
+                  int cnt = count(j);
+                  for (int k = 0; k < (1 << n); k++) {
+                      if (((j & (k << 1)) | (j & (k >> 1))) != 0)
+                          continue;
+
+                      dp[i][j] = Math.max(dp[i][j], dp[i - 1][k] + cnt);
+                  }
+              }
+
+              max = Math.max(dp[i][j], max);
+          }
+
+      }
+
+      return max;
+  }
+
+  private boolean isValid(char[][] seats, int i, int j) {
+      if (((j & (j << 1)) | (j & (j >> 1))) != 0)
+          return false;
+
+      String s = Integer.toBinaryString(j);
+      int n = seats[0].length, len = s.length();
+      for (int k = len - 1, t = n - 1; k >= 0; k--, t--) {
+          if (s.charAt(k) == '1' && seats[i][t] == '#')
+              return false;
+      }
+
+      return true;
+  }
+
+  private int count(int j) {
+      if (map.get(j) == null) {
+          String s = Integer.toBinaryString(j);
+          int cnt = 0;
+          for (char c : s.toCharArray())
+              if (c == '1')
+                  cnt++;
+
+          map.put(j, cnt);
+      }
+
+      return map.get(j);
+  }
+
+}
+```
+
