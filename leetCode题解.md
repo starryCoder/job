@@ -138,7 +138,7 @@ public int eraseOverlapIntervals(int[][] intervals) {
 贪心思想
 
 ```java
-     public int eraseOverlapIntervals(int[][] intervals) {
+public int eraseOverlapIntervals(int[][] intervals) {
 
     Arrays.sort(intervals, (a, b) -> a[1] - b[1]);
 
@@ -150,7 +150,6 @@ public int eraseOverlapIntervals(int[][] intervals) {
         }else {
             flag = i;
         }
-
     }
 
     return res;
@@ -5051,6 +5050,304 @@ class Solution {
       return map.get(j);
   }
 
+}
+```
+
+## 第176场周赛
+
+### 1.[统计有序矩阵中的负数](https://leetcode-cn.com/problems/count-negative-numbers-in-a-sorted-matrix/)
+
+```java
+public int countNegatives(int[][] grid) {
+    int n = grid.length, m = grid[0].length, res = 0;
+    for(int i = 0; i < n; i++){
+
+        if(grid[i][0] < 0){
+            res += (n - i) * m;
+            break;
+        }
+        for(int j = 0; j < m; j++){
+            if(grid[i][j] < 0){
+                res += (m - j);
+                break;
+            }
+        }
+    }
+    return res;
+}
+```
+
+### 2.[最后 K 个数的乘](https://leetcode-cn.com/problems/product-of-the-last-k-numbers/)
+
+```java
+class ProductOfNumbers {
+    private List<Integer> dp;
+    
+    public ProductOfNumbers() {
+        dp = new ArrayList<>();
+        dp.add(1);      
+    }
+
+    public void add(int num) {
+
+        if(num == 0){
+            dp = new ArrayList<>();
+            dp.add(1);
+        }else{  
+            dp.add(dp.get(dp.size() - 1) * num);
+        }
+    }
+
+    public int getProduct(int k) {
+        
+        if(k >= dp.size())
+            return 0;
+        
+                
+        return  dp.get(dp.size() - 1) / dp.get(dp.size() - k - 1) ;
+    }
+}
+```
+
+### 3.[最多可以参加的会议数目](https://leetcode-cn.com/problems/maximum-number-of-events-that-can-be-attended/)
+
+贪心算法，每次参加当前可以参加会议里面最早结束的会议
+
+```java
+public int maxEvents(int[][] events) {
+
+    TreeMap<Integer, List<Integer>> map = new TreeMap<>();
+
+    for (int[] temp : events) {
+        List<Integer> list = map.getOrDefault(temp[0], new ArrayList<>());
+        list.add(temp[1]);
+        map.put(temp[0], list);
+    }
+
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+
+    int res = 0, now = 1, n = events.length;
+
+    while (!map.isEmpty() || !queue.isEmpty()) {
+
+        if (!map.isEmpty()) {
+
+            if (now < map.firstKey() && queue.isEmpty())
+                now = map.firstKey();
+
+            if (now >= map.firstKey())
+                queue.addAll(map.pollFirstEntry().getValue());
+
+        }
+
+        while (!queue.isEmpty() && queue.peek() < now)
+            queue.poll();
+
+        if (!queue.isEmpty()) {
+            queue.poll();
+            res++;
+        }
+
+        now++;
+    }
+
+    return res;
+
+}
+```
+
+### 4.[多次求和构造目标数组](https://leetcode-cn.com/problems/construct-target-array-with-multiple-sums/)
+
+反向构造从最大的数开始
+
+```java
+public boolean isPossible(int[] target) {
+    Queue<Integer> queue = new PriorityQueue<>(Comparator.reverseOrder());
+    long sum = 0;
+    for (int t : target) {
+        queue.offer(t);
+        sum += t;
+    }
+
+    while (true) {
+        long pSum = queue.poll();
+        if (queue.isEmpty() || pSum == 1)
+            return pSum == 1;
+
+        if (queue.peek() == 1) {
+            return (pSum - 1) % (sum - pSum) == 0;
+        } else {
+            long n = (pSum - queue.peek()) / (sum - pSum) + 1;
+            long x = pSum - n * (sum - pSum);
+            if (x < 1)
+                return false;
+            sum = pSum - (n - 1) * (sum - pSum);
+            queue.offer((int) x);
+        }
+    }
+}
+```
+
+## 第177场周赛
+
+### 1.[日期之间隔几天](https://leetcode-cn.com/problems/number-of-days-between-two-dates/)
+
+```java
+class Solution {
+    public int daysBetweenDates(String date1, String date2) {
+        String[] d1 = date1.split("-");
+        String[] d2 = date2.split("-");
+
+        int[][] date = new int[2][3];
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (i == 0)
+                    date[i][j] = Integer.parseInt(d1[j]);
+                else
+                    date[i][j] = Integer.parseInt(d2[j]);
+            }
+        }
+
+        int di1 = cnt(date[0]), di2 = cnt(date[1]);
+
+        return Math.abs(di1 - di2);
+
+    }
+
+    private int cnt(int[] date) {
+
+        int[] dic = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+        int year = 1971, month = 1, day = 1, res = 0;
+        while (date[0] != year || date[1] != month || date[2] != day) {
+            res++;
+            day++;
+
+            if (month == 2 && isLeap(year) ) {
+                if(day > dic[month] + 1){
+                    day = 1;
+                    month++;
+                }
+            } else if (day > dic[month]) {
+                day = 1;
+                month++;
+            }
+
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+        }
+
+        return res;
+
+    }
+
+    private boolean isLeap(int year) {
+        return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+    }
+
+}
+```
+
+### 2.[验证二叉树](https://leetcode-cn.com/problems/validate-binary-tree-nodes/)
+
+计算节点的入度
+
+```java
+public boolean validateBinaryTreeNodes(int n, int[] leftChild, int[] rightChild) {
+    int[] flag = new int[n];
+
+    for(int i = 0; i < n; i++){
+       if(leftChild[i] != -1)
+           flag[leftChild[i]]++;
+
+        if(rightChild[i] != -1)
+            flag[rightChild[i]]++;
+    }
+
+    int root = 0;
+    for(int t : flag){
+        if(t > 1)
+            return false;
+
+        if(t == 0)
+            root++;
+    }
+
+    return root == 1;
+}
+```
+
+### 3.[最接近的因数](https://leetcode-cn.com/problems/closest-divisors/)
+
+因数越接近乘积越大，所以从最大的因数开始遍历
+
+```java
+public int[] closestDivisors(int num) {
+    int diff = Integer.MAX_VALUE;
+    int[] res = new int[2];
+    for (int temp = num + 1; temp <= num + 2; temp++)
+        for (int i = new Double(Math.sqrt(temp)).intValue(); i >= 0; i--)
+            if (temp % i == 0) {
+                int s = temp / i;
+                if (Math.abs(s - i) < diff) {
+                    res[0] = i;
+                    res[1] = s;
+                    diff = Math.abs(s - i);
+                }
+                break;
+            }
+    return res;
+}
+```
+
+### 4.[形成三的最大倍数](https://leetcode-cn.com/problems/largest-multiple-of-three/)
+
+`sum % 3 == 0,按大小输出，sum % 3 = 1，删除1个结果为1，或者两个结果为2，sum % 3 = 2同理`
+
+```java
+class Solution {
+    public String largestMultipleOfThree(int[] digits) {
+        int[] cnt = new int[10];
+        
+        int sum = 0;
+        for(int t : digits){
+            cnt[t]++;
+            sum += t;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        if(sum % 3 == 1){
+            if(!del(cnt, 1, 1) && !del(cnt, 2, 2))
+                return "";
+                      
+        }else if(sum % 3 == 2){
+            if(!del(cnt, 2, 1) && !del(cnt, 1, 2))
+                return "";
+        }
+        
+        for(int i = 9; i >= 0; i--){
+            while(cnt[i]-- > 0)
+                sb.append(i);
+        }
+        
+        if (sb.length() > 0 && sb.charAt(0) == '0')
+            return "0";
+        
+        return sb.toString();
+    }
+    
+    private boolean del(int[] cnt, int mod, int num){
+        
+        for(int i = 1; i <= 8; i++)
+            while(i % 3 == mod && cnt[i] > 0 && num > 0){
+                cnt[i]--;
+                num--;
+            }
+        
+        return num == 0;
+        
+    }
 }
 ```
 
