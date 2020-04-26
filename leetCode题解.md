@@ -5351,3 +5351,189 @@ class Solution {
 }
 ```
 
+## 第178场周赛
+
+### 1.[有多少小于当前数字的数字](https://leetcode-cn.com/problems/how-many-numbers-are-smaller-than-the-current-number/)
+
+```java
+public int[] smallerNumbersThanCurrent(int[] nums) {
+    int len = nums.length;
+    int[] res = new int[len], temp = nums.clone();
+
+    Arrays.sort(temp);
+    for (int i = 0; i < len; i++)
+        res[i] = leftBound(temp, nums[i]);
+
+    return res;
+
+}
+
+//二分查找
+private int leftBound(int[] nums, int target) {
+    int l = 0, r = nums.length;
+    while (l < r) {
+        int mid = (l + r) / 2;
+        if (nums[mid] == target) {
+            r = mid;
+        } else if (nums[mid] > target) {
+            r = mid;
+        } else if (nums[mid] < target) {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+```
+
+### 2.[通过投票对团队排名](https://leetcode-cn.com/problems/rank-teams-by-votes/)
+
+简单的排序
+
+```java
+public String rankTeams(String[] votes) {
+
+    Map<Character, int[]> map = new HashMap<>();
+    int len = votes[0].length();
+
+    for (String s : votes) {
+        for (int i = 0; i < len; i++) {
+            int[] t = map.getOrDefault(s.charAt(i), new int[len]);
+            t[i]++;
+            map.put(s.charAt(i), t);
+        }
+    }
+
+    List<Map.Entry<Character, int[]>> list = new ArrayList<>(map.entrySet());
+
+    list.sort((e1, e2) -> {
+        int[] t1 = e1.getValue(), t2 = e2.getValue();
+
+        for (int i = 0; i < len; i++) {
+            if (t1[i] != t2[i])
+                return t1[i] > t2[i] ? -1 : 1;
+
+        }
+
+        return e1.getKey().compareTo(e2.getKey());
+
+    });
+
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<Character, int[]> entry : list)
+        sb.append(entry.getKey());
+
+    return sb.toString();
+}
+```
+
+### 3.[二叉树中的列表](https://leetcode-cn.com/problems/linked-list-in-binary-tree/)
+
+就是寻找子二叉树
+
+```java
+public boolean isSubPath(ListNode head, TreeNode root) {
+    if(head == null)
+        return true;
+
+    if(root == null)
+        return head == null;
+
+
+   return isSub(head, root) || isSubPath(head, root.left) || isSubPath(head, root.right);
+
+}
+
+//判断是否含有链表
+private boolean isSub(ListNode head, TreeNode root){
+    if(head == null)
+        return true;
+
+    if(root == null)
+        return head == null;
+
+    if(root.val != head.val)
+        return false;
+
+    return isSub(head.next, root.left) || isSub(head.next, root.right);        
+}
+```
+
+### 4.[使网格图至少有一条有效路径的最小代价](https://leetcode-cn.com/problems/minimum-cost-to-make-at-least-one-valid-path-in-a-grid/)
+
+图的最短路径，权值分别为1和0
+
+```java
+class Solution {
+    private int[][] drict = new int[][]{{}, {0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    public int minCost(int[][] grid) {
+        int m = grid.length;
+        int n = grid[0].length;
+        
+        int[][] dit = new int[m][n];
+        
+        
+        for(int i = 0; i < m; i++)
+            Arrays.fill(dit[i], -1);
+        
+        dit[0][0] = 0;
+        Queue<int[]> queue = new LinkedList<>();
+        queue.offer(new int[]{0, 0, 0});
+        
+        while(!queue.isEmpty()){
+            
+            int[] temp =queue.poll();
+            
+            for(int i = 1; i <= 4; i++){
+                int x = temp[0] + drict[i][0],
+                y = temp[1] + drict[i][1];
+                
+                if(x >= m || x < 0 || y >= n || y < 0)
+                    continue;
+                
+                int add = i == grid[temp[0]][temp[1]] ? 0 : 1;
+                
+                if(dit[x][y] == -1 || dit[x][y] > temp[2] + add){
+                    
+                    dit[x][y] = temp[2] + add;
+                    queue.offer(new int[]{x, y, dit[x][y]});
+                }
+                     
+            }
+        }
+        return Math.max(0, dit[m - 1][n - 1]);
+    }
+}
+```
+
+## 每日一题
+
+### [4.9 括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
+
+暴力回溯法，加剪枝操作
+
+```java
+public List<String> generateParenthesis(int n) {
+    List<String> res = new ArrayList<>();
+
+    dfs("", n, n, res);
+    return res;
+}
+
+private void dfs(String s, int l, int r, List<String> res){
+
+    if(l == 0 && r == 0){
+        res.add(s);
+        return;
+    }
+
+    if(l > 0){
+        dfs(s + "(", l - 1, r, res);
+    }
+
+    if(r > l){
+        dfs(s + ")", l, r - 1, res);      
+    }
+} 
+```
+
+w
